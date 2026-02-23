@@ -102,10 +102,6 @@ export const generateEml = async (): Promise<void> => {
 						if ('image_url' in a && a.image_url !== undefined) {
 							attaches.push(a.image_url);
 						}
-						// TODO: Verify other type of attachments which need to be handled that aren't file uploads and image urls
-						// } else {
-						// 	console.log(a);
-						// }
 					});
 
 					rows.push(`${message.msg} (${attaches.join(', ')})`);
