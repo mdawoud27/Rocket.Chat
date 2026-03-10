@@ -8,6 +8,7 @@ import NavBarItemHomePage from './NavBarItemHomePage';
 import NavBarItemMarketPlaceMenu from './NavBarItemMarketPlaceMenu';
 import NavBarItemSort from './NavBarItemSort';
 import NavBarPagesStackMenu from './NavBarPagesStackMenu';
+import NavBarItemActivityHub from './NavBarItemActivityHub';
 
 const NavBarPagesGroup = () => {
 	const { t } = useTranslation();
@@ -24,6 +25,7 @@ const NavBarPagesGroup = () => {
 				<>
 					<NavBarItemHomePage title={t('Home')} />
 					<NavBarItemDirectoryPage title={t('Directory')} />
+					<NavBarItemActivityHub title={t('Activity_Hub')} />
 				</>
 			)}
 			{showMarketplace && !isMobile && <NavBarItemMarketPlaceMenu />}

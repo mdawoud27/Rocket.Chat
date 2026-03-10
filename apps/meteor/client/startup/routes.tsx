@@ -1,3 +1,5 @@
+const ActivityHubPage = lazy(() => import('../views/activityHub/ActivityHubPage'));
+
 import { SetupWizardRoute } from '@rocket.chat/ui-client';
 import { createElement, lazy, useEffect } from 'react';
 
@@ -43,6 +45,12 @@ declare module '@rocket.chat/ui-contexts' {
 			pathname: '/home';
 			pattern: '/home';
 		};
+
+		'activity-hub': {
+			pathname: '/activity-hub';
+			pattern: '/activity-hub';
+		};
+
 		'directory': {
 			pathname: `/directory${`/${'users' | 'channels' | 'teams' | 'external'}` | ''}`;
 			pattern: '/directory/:tab?';
@@ -137,6 +145,15 @@ router.defineRoutes([
 		element: appLayout.wrap(
 			<MainLayout>
 				<HomePage />
+			</MainLayout>,
+		),
+	},
+	{
+		path: '/activity-hub',
+		id: 'activity-hub',
+		element: appLayout.wrap(
+			<MainLayout>
+				<ActivityHubPage />
 			</MainLayout>,
 		),
 	},

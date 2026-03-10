@@ -1,0 +1,156 @@
+import type { INotificationHistory } from '@rocket.chat/core-typings';
+import { Messages, NotificationHistory } from '@rocket.chat/models';
+import { ajv, validateBadRequestErrorResponse, validateUnauthorizedErrorResponse } from '@rocket.chat/rest-typings';
+
+import { normalizeMessagesForUser } from '../../../utils/server/lib/normalizeMessagesForUser';
+import type { ExtractRoutesFromAPI } from '../ApiClass';
+import { API } from '../api';
+import { getPaginationItems } from '../helpers/getPaginationItems';
+import { findAllStarredMessagesByUser } from '../lib/activityHub';
+
+export const activityHubEndpoints = API.v1
+	.get(
+		'activity-hub.notifications',
+		{
+			authRequired: true,
+			query: ajv.compile<{ count?: number; offset?: number }>({
+				type: 'object',
+				properties: {
+					count: { type: 'number', nullable: true },
+					offset: { type: 'number', nullable: true },
+				},
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile<{
+					notifications: INotificationHistory[];
+					total: number;
+					count: number;
+					offset: number;
+				}>({
+					type: 'object',
+					properties: {
+						notifications: { type: 'array', items: { type: 'object' } },
+						total: { type: 'number' },
+						count: { type: 'number' },
+						offset: { type: 'number' },
+						success: { type: 'boolean', enum: [true] },
+					},
+					required: ['notifications', 'total', 'count', 'offset', 'success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			const { count = 50, offset = 0 } = this.queryParams;
+
+			const { cursor, totalCount } = NotificationHistory.findPaginatedByUserId(this.userId, {
+				limit: count,
+				skip: offset,
+			});
+
+			const [notifications, total] = await Promise.all([cursor.toArray(), totalCount]);
+
+			return API.v1.success({ notifications, total, count: notifications.length, offset });
+		},
+	)
+	.delete(
+		'activity-hub.notifications',
+		{
+			authRequired: true,
+			body: ajv.compile<{ notificationId: string }>({
+				type: 'object',
+				properties: {
+					notificationId: { type: 'string', minLength: 1 },
+				},
+				required: ['notificationId'],
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile({
+					type: 'object',
+					properties: { success: { type: 'boolean', enum: [true] } },
+					required: ['success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			const { notificationId } = this.bodyParams;
+			await NotificationHistory.deleteOneByIdAndUserId(notificationId, this.userId);
+			return API.v1.success();
+		},
+	)
+	.delete(
+		'activity-hub.notifications.clear',
+		{
+			authRequired: true,
+			body: ajv.compile<Record<string, never>>({
+				type: 'object',
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile({
+					type: 'object',
+					properties: { success: { type: 'boolean', enum: [true] } },
+					required: ['success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			await NotificationHistory.deleteAllByUserId(this.userId);
+			return API.v1.success();
+		},
+	)
+	.get(
+		'activity-hub.starredMessages',
+		{
+			authRequired: true,
+			query: ajv.compile<{ count?: number; offset?: number }>({
+				type: 'object',
+				properties: {
+					count: { type: 'number', nullable: true },
+					offset: { type: 'number', nullable: true },
+				},
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile({
+					type: 'object',
+					properties: {
+						messages: { type: 'array', items: { type: 'object' } },
+						total: { type: 'number' },
+						count: { type: 'number' },
+						offset: { type: 'number' },
+						success: { type: 'boolean', enum: [true] },
+					},
+					required: ['messages', 'total', 'count', 'offset', 'success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			const { count = 50, offset = 0 } = this.queryParams;
+
+			const result = await findAllStarredMessagesByUser({
+				uid: this.userId,
+				pagination: { offset, count },
+			});
+
+			result.messages = await normalizeMessagesForUser(result.messages, this.userId);
+
+			return API.v1.success(result);
+		},
+	);
+
+type ActivityHubEndpoints = ExtractRoutesFromAPI<typeof activityHubEndpoints>;
+
+declare module '@rocket.chat/rest-typings' {
+	// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-empty-interface
+	interface Endpoints extends ActivityHubEndpoints {}
+}
