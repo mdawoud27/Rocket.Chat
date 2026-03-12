@@ -6,7 +6,7 @@ import type { IBaseModel } from './IBaseModel';
 export interface INotificationHistoryModel extends IBaseModel<INotificationHistory> {
 	findPaginatedByUserId(
 		userId: string,
-		options: { limit: number; skip: number },
+		options: { limit: number; skip: number; type?: INotificationHistory['type'] },
 	): { cursor: FindCursor<WithId<INotificationHistory>>; totalCount: Promise<number> };
 
 	deleteOneByIdAndUserId(_id: string, userId: string): Promise<DeleteResult>;

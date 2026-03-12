@@ -12,6 +12,7 @@ import {
 import { callbacks } from '../../../../server/lib/callbacks';
 import { settings } from '../../../settings/server';
 import { messageContainsHighlight } from '../functions/notifications/messageContainsHighlight';
+import { createMentionNotifications } from '../../../api/server/lib/activityHub';
 
 export async function getMentions(message: IMessage): Promise<{ toAll: boolean; toHere: boolean; mentionIds: string[] }> {
 	const {
@@ -110,6 +111,7 @@ async function updateUsersSubscriptions(message: IMessage, room: IRoom): Promise
 
 	// Give priority to user mentions over group mentions
 	if (userIds.length) {
+		void createMentionNotifications(message, userIds);
 		await Subscriptions.incUserMentionsAndUnreadForRoomIdAndUserIds(room._id, userIds, 1, userMentionInc);
 	} else if (toAll || toHere) {
 		await Subscriptions.incGroupMentionsAndUnreadForRoomIdExcludingUserId(room._id, message.u._id, 1, groupMentionInc);

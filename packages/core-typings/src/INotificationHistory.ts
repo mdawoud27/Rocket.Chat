@@ -9,7 +9,7 @@ export interface INotificationHistory {
 	msgId: IMessage['_id'];
 	roomName?: string;
 	message: string;
-	type: 'mention' | 'direct' | 'general';
+	type: 'general' | 'direct' | 'mention' | 'reaction' | 'star' | 'quote' | 'thread';
 	ts: Date;
 	_updatedAt: Date;
 }

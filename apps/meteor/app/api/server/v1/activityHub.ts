@@ -1,23 +1,28 @@
 import type { INotificationHistory } from '@rocket.chat/core-typings';
-import { Messages, NotificationHistory } from '@rocket.chat/models';
+import { NotificationHistory } from '@rocket.chat/models'; // Messages
 import { ajv, validateBadRequestErrorResponse, validateUnauthorizedErrorResponse } from '@rocket.chat/rest-typings';
 
 import { normalizeMessagesForUser } from '../../../utils/server/lib/normalizeMessagesForUser';
 import type { ExtractRoutesFromAPI } from '../ApiClass';
 import { API } from '../api';
-import { getPaginationItems } from '../helpers/getPaginationItems';
-import { findAllStarredMessagesByUser } from '../lib/activityHub';
+// import { getPaginationItems } from '../helpers/getPaginationItems';
+import { findAllActivitiesByUser, findAllMentionsByUser, findAllReactionsForUser, findAllStarredMessagesByUser } from '../lib/activityHub';
 
 export const activityHubEndpoints = API.v1
 	.get(
 		'activity-hub.notifications',
 		{
 			authRequired: true,
-			query: ajv.compile<{ count?: number; offset?: number }>({
+			query: ajv.compile<{ count?: number; offset?: number; type?: INotificationHistory['type'] }>({
 				type: 'object',
 				properties: {
 					count: { type: 'number', nullable: true },
 					offset: { type: 'number', nullable: true },
+					type: {
+						type: 'string',
+						enum: ['general', 'direct', 'mention', 'reaction', 'star', 'quote', 'thread'],
+						nullable: true,
+					},
 				},
 				additionalProperties: false,
 			}),
@@ -43,11 +48,12 @@ export const activityHubEndpoints = API.v1
 			},
 		},
 		async function action() {
-			const { count = 50, offset = 0 } = this.queryParams;
+			const { count = 50, offset = 0, type } = this.queryParams;
 
 			const { cursor, totalCount } = NotificationHistory.findPaginatedByUserId(this.userId, {
 				limit: count,
 				skip: offset,
+				type,
 			});
 
 			const [notifications, total] = await Promise.all([cursor.toArray(), totalCount]);
@@ -138,6 +144,129 @@ export const activityHubEndpoints = API.v1
 			const { count = 50, offset = 0 } = this.queryParams;
 
 			const result = await findAllStarredMessagesByUser({
+				uid: this.userId,
+				pagination: { offset, count },
+			});
+
+			result.messages = await normalizeMessagesForUser(result.messages, this.userId);
+
+			return API.v1.success(result);
+		},
+	)
+	.get(
+		'activity-hub.mentions',
+		{
+			authRequired: true,
+			query: ajv.compile<{ count?: number; offset?: number }>({
+				type: 'object',
+				properties: {
+					count: { type: 'number', nullable: true },
+					offset: { type: 'number', nullable: true },
+				},
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile({
+					type: 'object',
+					properties: {
+						messages: { type: 'array', items: { type: 'object' } },
+						total: { type: 'number' },
+						count: { type: 'number' },
+						offset: { type: 'number' },
+						success: { type: 'boolean', enum: [true] },
+					},
+					required: ['messages', 'total', 'count', 'offset', 'success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			const { count = 50, offset = 0 } = this.queryParams;
+
+			const result = await findAllMentionsByUser({
+				uid: this.userId,
+				pagination: { offset, count },
+			});
+
+			result.messages = await normalizeMessagesForUser(result.messages, this.userId);
+
+			return API.v1.success(result);
+		},
+	)
+	.get(
+		'activity-hub.reactions',
+		{
+			authRequired: true,
+			query: ajv.compile<{ count?: number; offset?: number }>({
+				type: 'object',
+				properties: {
+					count: { type: 'number', nullable: true },
+					offset: { type: 'number', nullable: true },
+				},
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile({
+					type: 'object',
+					properties: {
+						messages: { type: 'array', items: { type: 'object' } },
+						total: { type: 'number' },
+						count: { type: 'number' },
+						offset: { type: 'number' },
+						success: { type: 'boolean', enum: [true] },
+					},
+					required: ['messages', 'total', 'count', 'offset', 'success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			const { count = 50, offset = 0 } = this.queryParams;
+
+			const result = await findAllReactionsForUser({
+				uid: this.userId,
+				pagination: { offset, count },
+			});
+
+			result.messages = await normalizeMessagesForUser(result.messages, this.userId);
+
+			return API.v1.success(result);
+		},
+	)
+	.get(
+		'activity-hub.all',
+		{
+			authRequired: true,
+			query: ajv.compile<{ count?: number; offset?: number }>({
+				type: 'object',
+				properties: {
+					count: { type: 'number', nullable: true },
+					offset: { type: 'number', nullable: true },
+				},
+				additionalProperties: false,
+			}),
+			response: {
+				200: ajv.compile({
+					type: 'object',
+					properties: {
+						messages: { type: 'array', items: { type: 'object' } },
+						total: { type: 'number' },
+						count: { type: 'number' },
+						offset: { type: 'number' },
+						success: { type: 'boolean', enum: [true] },
+					},
+					required: ['messages', 'total', 'count', 'offset', 'success'],
+				}),
+				400: validateBadRequestErrorResponse,
+				401: validateUnauthorizedErrorResponse,
+			},
+		},
+		async function action() {
+			const { count = 50, offset = 0 } = this.queryParams;
+
+			const result = await findAllActivitiesByUser({
 				uid: this.userId,
 				pagination: { offset, count },
 			});

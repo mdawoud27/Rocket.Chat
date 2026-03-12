@@ -15,9 +15,13 @@ export class NotificationHistoryRaw extends BaseRaw<INotificationHistory> implem
 
 	findPaginatedByUserId(
 		userId: string,
-		options: { limit: number; skip: number },
+		options: { limit: number; skip: number; type?: INotificationHistory['type'] },
 	): { cursor: FindCursor<WithId<INotificationHistory>>; totalCount: Promise<number> } {
-		return this.findPaginated({ userId }, { sort: { ts: -1 }, limit: options.limit, skip: options.skip });
+		const query: any = { userId };
+		if (options.type) {
+			query.type = options.type;
+		}
+		return this.findPaginated(query, { sort: { ts: -1 }, limit: options.limit, skip: options.skip });
 	}
 
 	deleteOneByIdAndUserId(_id: string, userId: string): Promise<DeleteResult> {
