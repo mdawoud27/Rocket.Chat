@@ -1,11 +1,10 @@
 import type { INotificationHistory } from '@rocket.chat/core-typings';
-import { NotificationHistory } from '@rocket.chat/models'; // Messages
+import { NotificationHistory } from '@rocket.chat/models';
 import { ajv, validateBadRequestErrorResponse, validateUnauthorizedErrorResponse } from '@rocket.chat/rest-typings';
 
 import { normalizeMessagesForUser } from '../../../utils/server/lib/normalizeMessagesForUser';
 import type { ExtractRoutesFromAPI } from '../ApiClass';
 import { API } from '../api';
-// import { getPaginationItems } from '../helpers/getPaginationItems';
 import { findAllActivitiesByUser, findAllMentionsByUser, findAllReactionsForUser, findAllStarredMessagesByUser } from '../lib/activityHub';
 
 export const activityHubEndpoints = API.v1

@@ -10,9 +10,9 @@ import {
 	notifyOnSubscriptionChangedByRoomIdAndUserIds,
 } from './notifyListener';
 import { callbacks } from '../../../../server/lib/callbacks';
+import { createMentionNotifications } from '../../../api/server/lib/activityHub';
 import { settings } from '../../../settings/server';
 import { messageContainsHighlight } from '../functions/notifications/messageContainsHighlight';
-import { createMentionNotifications } from '../../../api/server/lib/activityHub';
 
 export async function getMentions(message: IMessage): Promise<{ toAll: boolean; toHere: boolean; mentionIds: string[] }> {
 	const {

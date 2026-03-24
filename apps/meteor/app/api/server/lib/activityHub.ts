@@ -95,12 +95,7 @@ export async function findAllActivitiesByUser({
 	return { messages, total };
 }
 
-export async function createReactionNotification(
-	userId: string,
-	message: IMessage,
-	reaction: string,
-	shouldReact: boolean,
-): Promise<void> {
+export async function createReactionNotification(userId: string, message: IMessage, reaction: string, shouldReact: boolean): Promise<void> {
 	if (!shouldReact || message.u._id === userId) {
 		return;
 	}
