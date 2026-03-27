@@ -60,8 +60,8 @@ export const activityHubEndpoints = API.v1
 			return API.v1.success({ notifications, total, count: notifications.length, offset });
 		},
 	)
-	.delete(
-		'activity-hub.notifications',
+	.post(
+		'activity-hub.notifications.delete',
 		{
 			authRequired: true,
 			body: ajv.compile<{ notificationId: string }>({
@@ -88,8 +88,8 @@ export const activityHubEndpoints = API.v1
 			return API.v1.success();
 		},
 	)
-	.delete(
-		'activity-hub.notifications.clear',
+	.post(
+		'activity-hub.notifications.clearAll',
 		{
 			authRequired: true,
 			body: ajv.compile<Record<string, never>>({
